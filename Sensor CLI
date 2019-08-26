@@ -1,0 +1,39 @@
+cmd: h
+h
+	h	[mask]. Lists of all commands 
+	b	[mask]. Brief help 
+	p	shows user parameters (brief) 
+	w	shows WiFi parameters (brief) 
+	reset	Restart/Reboot 
+	test45	Flip-flops (LED) (GPIO4) (GPIO5) until CR 
+	testinp	Inputs GPIOs: 02, 04, 05, 14 until CR 
+	inpPIN	p1 p2 ... pN. Inputs PINS until CR 
+	outPIN	pin. Squarewave output to 'pin' until CR 
+	format	Formats the filesystem 
+	dir	List files in FS 
+	initEE	Initialize parameters to defaults and save to EEP 
+	!initEE	 
+	set	name value. Update parm & save in EEPROM 
+	!set	 
+	get	name1..nameN. Get parameter values 
+	show	show all parameters 
+	!show	 
+	!status	Displays wifi status 
+	send	sindex c1..c4. Send /cli?cmd=c1+..+c4 
+	ask	si </cmd>|<cmd p1..pn>. Do an HTTP/GET from sensor 
+	result	[si]. Shows last result of this sensor 
+	fetch	[sensor] Fetch sensor data and decode measurements 
+	!fetch	Same as above for Meguno 
+	scan	0|1|3 Enable scanning sensors. 3=update Meguno 
+	!scan	0|1|3 Enable scanning sensors. 3=update Meguno 
+	!state	Shows measurement state 
+cmd: b
+b
+      h       b       p       w   reset  test45 testinp  inpPIN  outPIN  format 
+    dir  initEE !initEE     set    !set     get    show   !show !status    send 
+    ask  result   fetch  !fetch    scan   !scan  !state 
+cmd: 
+cmd: p
+p
+trace=0, timeout=2000, dbox=0, mask=XXX--, sens0IP=115, sens1IP=116, sens2IP=117, sens3IP=0, sens4IP=0, 
+cmd:

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<title>
+	WEB CLI
+</title>
+
+	<style>
+		body {text-align: center;}
+		input {font-size: 80%;}
+		button {text-align:center; font-size: 80%;}
+		td {text-align:center; width:100px; }
+	</style>
+	
+<body onload="fetchData(); setInterval( fetchData, 2000);">
+
+	<h1>SENSE</h1>
+
+	<h3>
+		<table align="center">
+			<tr>
+				<td>Sensor#0</td><td>Sensor#1</td><td>Sensor#2</td><td>Sensor#3</td><td>Sensor#4</td>
+			</tr>
+			<tr>
+				<td id="idt0"></td><td id="idt1"></td><td id="idt2"></td><td id="idt3"></td><td id="idt4"></td>
+			</tr>
+		</table>
+	</h3>
+
+	<h2><a href="index.htm">Goto INDEX</a></h2>
+
+	<script>
+		var simul = true;
+		var obj = {ip0:73,sen0:70.7,ip1:28,sen1:64.1,ip2:29,sen2:25.4,ip3:0,sen3:0.0,ip4:0,sen4:0.0};
+		
+    	var degF = " \u2109"; 
+		var degC = " \u2103"; 
+		
+		function fetchData()
+		{
+			simul = !(document.location.host);
+			if( simul )
+				handler();
+			else
+			{
+				var request = new XMLHttpRequest();
+				request.onload = handler;
+				request.open('GET', '/sense');
+				request.send();
+			}
+		}
+		function handler()
+		{
+			if( (this.status == 200) && (simul== false ) ) 
+			{
+				obj = JSON.parse( this.responseText );
+				doit( obj );
+			}
+			if( simul ) // random data changes
+			{
+				obj.sen0 = Math.random()*70.0;
+				obj.sen1 = Math.random()*70.0;
+				obj.sen2 = Math.random()*70.0;
+				obj.sen3 = Math.random()*70.0;
+				obj.sen4 = Math.random()*70.0;
+				
+				doit( obj );
+			}
+		}
+		function doit( oj )
+		{
+			document.getElementById("idt0").innerHTML = oj.ip0>0 ? oj.sen0.toFixed(1).toString()+degF : "OFF";	
+			document.getElementById("idt1").innerHTML = oj.ip1>0 ? oj.sen1.toFixed(1).toString()+degF : "OFF";	
+			document.getElementById("idt2").innerHTML = oj.ip2>0 ? oj.sen2.toFixed(1).toString()+degF : "OFF";	
+			document.getElementById("idt3").innerHTML = oj.ip3>0 ? oj.sen3.toFixed(1).toString()+degF : "OFF";	
+			document.getElementById("idt4").innerHTML = oj.ip4>0 ? oj.sen4.toFixed(1).toString()+degF : "OFF";	
+		}
+	</script>
+
+</body>
+</html>
