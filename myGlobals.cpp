@@ -16,7 +16,3 @@
 
     // Labels used for sensor types
     char *senstype[]={"Disabled", "RadioStat", "DS18", "DS18x2", "DHT", "HTU"};
-    
-    //struct rdt_t rd[ SCAN_COUNT ]; 
-    //struct rpc_t rpc;
- 

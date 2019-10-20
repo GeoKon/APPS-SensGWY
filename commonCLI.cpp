@@ -3,18 +3,23 @@
  *  You may use this code as you like, as long as you attribute credit to the author.
  * ---------------------------------------------------------------------------------
  */
+// Common CLI handlers for TmpHumdSensor.cpp and SenseGWY.cpp
+
 // Minimum necessary for this file to compile
-// Use console PF() for all Meguno updates, i.e. mgnCommands( n, arg[] ). This will allow use via Web interface
-// Use *bp for all cliCommands( n, *arg[] )
 
 #include <FS.h>
 #include <externIO.h>       // IO includes and cpu...exe extern declarations
-#include "myGlobals.h"
+#include "myGlobals.h"		
 #include "SimpleSRV.h"      // We only need the getWiFiStatus()
-#include "commonCLI.h"
+#include "CommonCLI.h"
 
-char *channel = "";
-
+static char *channel = "";
+#define BINIT( A, ARG )    BUF *A = (BUF *)ARG[0]
+#define RESPONSE( A, ... ) if( bp )                     \
+                            bp->add(A, ##__VA_ARGS__ ); \
+                           else                         \
+                            PF(A, ##__VA_ARGS__);
+							
 // ----------------------------- CLI Command Handlers ---------------------------
 
     void help ( int n, char **arg ){exe.help ( n, arg );}    // what to do when "h" is entered
@@ -143,7 +148,12 @@ char *channel = "";
 
 // ============================== MEGUNO LINK INTERFACE for EEPROM ===============================
 
-    void mgnGetStatus( int n, char **arg )
+    void cliShowSystemStatus( int n, char **arg )
+    {
+        BINIT( bp, arg );
+        bufWiFiStatus( bp, false );                 // included in SimpleSRV.cpp
+    }
+    void mgnShowSystemStatus( int n, char **arg )
     {
         BINIT( bp, arg );
         
@@ -168,7 +178,7 @@ char *channel = "";
         myp.saveMyEEParms();
         RESPONSE("Initialized\r\n");        
     }
-    void mgnInitEEParms( int n, char **arg )       // initialize all EEPROM parms and save them
+    void mgnInitEEParms( int n, char **arg )        // initialize all EEPROM parms and save them
     {
         cliInitEEParms( n, arg );
         nmp.printMgnInfo( channel, "", "EE Parms" );     
@@ -190,9 +200,9 @@ char *channel = "";
     {            
         BINIT( bp, arg );
         int N = nmp.getParmCount();
-        for( int i=1; i<N; i++ )
+        for( int i=0; i<N; i++ )
         {
-            RESPONSE( "%s=%s%s", nmp.getParmName(i), nmp.getParmValueStr(i), (i==n-1)?"\r\n":", " );
+            RESPONSE( "%s=%s%s", nmp.getParmName(i), nmp.getParmValueStr(i), (i==N-1)?"\r\n":", " );
         }
     }
     void mgnShowAllParms( int n, char **arg )
@@ -288,17 +298,21 @@ char *channel = "";
         {"format",  "Formats the filesystem",                           cliFormat }, 
         {"dir",     "List files in FS",                                 cliDirectory }, 
         
-        {"initEE",          "Initialize parameters to defaults and save to EEP",cliInitEEParms },
-        {"!initEE",         "",                                                 mgnInitEEParms },
+        {"initEE",  "Initialize parameters to defaults and save to EEP",cliInitEEParms },
+        {"!initEE", "",                                                 mgnInitEEParms },
 
-        {"set",             "name value. Update parm & save in EEPROM",         cliSetAnyParm },
-        {"!set",            "",                                                 mgnSetAnyParm },
-        {"get",             "name1..nameN. Get parameter values",               cliGetUserParm },
+        {"set",     "name value. Update parm & save in EEPROM",         cliSetAnyParm },
+        {"!set",    "",                                                 mgnSetAnyParm },
+        {"get",     "name1..nameN. Get parameter values",               cliGetUserParm },
         
-        {"show",            "show all parameters",                              cliShowAllParms }, 
-        {"!show",           "",                                                 mgnShowAllParms }, 
+        {"show",    "show all parameters",                              cliShowAllParms }, 
+        {"!show",   "",                                                 mgnShowAllParms }, 
         
-        {"!status",         "Displays wifi status",                               mgnGetStatus },
- 
+        {"wifi",    "Displays wifi and system status",                  cliShowSystemStatus },
+        {"!wifi",   "",                                                 mgnShowSystemStatus },
+         
         {NULL, NULL, NULL}
     };
+
+#undef BINIT
+#undef RESPONSE

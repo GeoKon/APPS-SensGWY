@@ -83,6 +83,10 @@ enum type_t { NONE=0, RADIOSTAT=1, OWN_DS18=2, OWN_DS18x2=3, OWN_DHT=4, OWN_HTU=
             char response[ 512 ];
             bool ready;                                     // true=command is pending for execution
         } rpc;
+
+        int oledon;                                         // oled state, 0 or 1
+        bool menuon;                                        // menu active 
+        bool swapon;                                        // true if secondary pins are active
         
         void initVolatile()                                 // ======= A2. Initialize here the volatile parameters
         {
@@ -104,7 +108,10 @@ enum type_t { NONE=0, RADIOSTAT=1, OWN_DS18=2, OWN_DS18x2=3, OWN_DHT=4, OWN_HTU=
             }
             rpc.command[0]=0;
             rpc.response[0] = 0;
-            rpc.ready = false;    
+            rpc.ready = false; 
+            swapon = false; 
+            menuon = false;
+            oledon = 1;
         }
         void printVolatile( char *prompt="", BUF *bp=NULL ) // ======= A3. Add to buffer (or print) all volatile parms
         {
@@ -112,6 +119,7 @@ enum type_t { NONE=0, RADIOSTAT=1, OWN_DS18=2, OWN_DS18x2=3, OWN_DHT=4, OWN_HTU=
         }
         struct gp_t                                         // ======= B1. Add here all non-volatile parameters into a structure
         {                           
+            int oledbr;                 // oled brightness
             int scan;                   // enable/disable scanning of sensors
             int timeout;                // fetch timeout in ms
             int trace;                  // debug, serial port tracing mask
@@ -122,6 +130,7 @@ enum type_t { NONE=0, RADIOSTAT=1, OWN_DS18=2, OWN_DS18x2=3, OWN_DHT=4, OWN_HTU=
         
         void initMyEEParms()                                // ======= B2. Initialize here the non-volatile parameters
         {
+            gp.oledbr = 10;
             gp.scan   = 0;
             gp.timeout = 2000;
             gp.trace  = 3;
@@ -136,7 +145,8 @@ enum type_t { NONE=0, RADIOSTAT=1, OWN_DS18=2, OWN_DS18x2=3, OWN_DHT=4, OWN_HTU=
         void registerMyEEParms()                           // ======= B3. Register parameters by name
         {
             nmp.resetRegistry();
-            nmp.registerParm( "scan",     'd', &gp.scan,       "0=do not scan sensors 1=scan 3=scan and display)"    );
+            nmp.registerParm( "oledbr",   'd', &gp.oledbr,     "brightness" );
+            nmp.registerParm( "scan",     'd', &gp.scan,       "1=scan 2=Meguno. Use CLI scan"    );
             nmp.registerParm( "trace",    'd', &gp.trace,      "0=traceOFF, 1=Requests, 2=Responses, 4=Remote Cmd"    );
             nmp.registerParm( "timeout",  'd', &gp.timeout,    "max delay waiting to fetch sensor data"    );
             nmp.registerParm( "dbox",     'd', &gp.dboxTm,     "0=OFF, N[sec]=store in Dropbox"    );

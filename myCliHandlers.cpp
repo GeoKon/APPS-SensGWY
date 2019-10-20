@@ -6,22 +6,32 @@
 // Minimum necessary for this file to compile
 
 #include <FS.h>
-#include <externIO.h>       // IO includes and cpu...exe extern declarations
+#include <externIO.h>               // IO includes and cpu...exe extern declarations
 #include "mgnClass.h"
+#include "oledClass.h"
+
 #include "myGlobals.h"
 #include "mySupport.h"
 #include "commonCLI.h"
+#include "myDisplay.h"
 #include "myCliHandlers.h"
 
-MGN mgn;                   // allocate Meguno Link class
-char *mychn = "CONFIG";
+MGN mgn;                            // allocate Meguno Link class
 
+static char *mychn = "CONFIG";
+
+#define RESPONSE( A, ... ) if( bp )                     \
+                            bp->add(A, ##__VA_ARGS__ ); \
+                           else                         \
+                            PF(A, ##__VA_ARGS__);
+
+ 
 // ------------------------------ Streaming & Show measurements -----------------------------
 
     void showMgnSensor( int i /* sensor id */ )
     {
         B64( tmp );                             // temporary stack buffer 
-        mgn.init( mychn );                    // to print to console immediately
+        mgn.init( mychn );                      // to print to console immediately
 
         if( F_ERROR(i) )                        // if a fetch() error...
         {
@@ -169,8 +179,7 @@ char *mychn = "CONFIG";
         int doi = (n>=1) ? atoi( arg[1] ) : 0;
         
         myp.gp.scan = doi;
-        RESPONSE("ok(%d)", doi );
-
+             
         myp.saveMyEEParms();            // save scan to EEPROM       
         RESPONSE("ok(%d)", doi );
     }
@@ -189,20 +198,67 @@ char *mychn = "CONFIG";
     {
         showMgnSensor( sens.getIndex() );
     }
+    void cliSetOLED( int n, char **arg )
+    {
+        BINIT( bp, arg );
+        
+        int value = (n>=1) ? atoi( arg[1] ) : 1;
+        brightOLED( value );
+        
+        if( value )                     // activate OLED
+            showOLED("INIT");           // initialize
+        else
+            showOLED("CLEAR");
 
+        myp.saveMyEEParms();            // save oledbr to EEPROM    
+        RESPONSE("ok(%d)", value );
+    }
+    void mgnSetOLED( int n, char **arg )
+    {
+        BINIT( bp, arg );
+        cliSetOLED( n, arg );
+        nmp.printMgnInfo( mychn, "oledbr", "updated" );             // update named parameters
+        nmp.printMgnParm( mychn, "oledbr" );            
+    }
+
+    void cliSwapPins( int n, char **arg )
+    {
+        BINIT( bp, arg );
+        char *p;        
+        int pins = (n>=1) ? atoi( arg[1] ) : 0;
+        swapSerial( pins );
+//        if( myp.swapon )
+//            p = "Secondary Serial pins active\r\n";
+//        else
+//            p = "Primary Serial pins active\r\n";
+//        RESPONSE( p );
+    }
+    void cliDummy( int n, char **arg )
+    {
+        ;   // do nothing. This is intercepted by main loop. Only used for help
+    }
     // ============================== CLI COMMAND TABLE =======================================
 
     CMDTABLE mypTable[]= 
     {
         {"send",     "sindex c1..c4. Send /cli?cmd=c1+..+c4",               cliSendRPC },      
         {"ask",      "si </cmd>|<cmd p1..pn>. Do an HTTP/GET from sensor",  cliAskSensor }, 
+
+        {"oled",     "brightness. Initializes OLED; use 0 to clear OLED",   cliSetOLED}, 
+        {"!oled",    "",                                                    mgnSetOLED}, 
+
+        {"swap",     "0=primary 1=secondary set of pins",                   cliSwapPins}, 
+  
         {"result",   "[si]. Shows last result of this sensor",              cliLastResult}, 
         {"fetch",    "[sensor] Fetch sensor data and decode measurements",  cliFetchSensor }, 
         {"!fetch",   "Same as above for Meguno",                            mgnFetchSensor }, 
 
-        {"scan",     "0|1|3 Enable scanning sensors. 3=update Meguno",      cliSetScan },
-        {"!scan",    "0|1|3 Enable scanning sensors. 3=update Meguno",      mgnSetScan },
+        {"scan",     "mask: 1=scan sensors 2:show Meguno, 4:show OLED",     cliSetScan },
+        {"!scan",    "",                                                    mgnSetScan },
         {"!state",   "Shows measurement state",                             mgnShowState },
+
+        {"restart",  "Restart main program",                                cliDummy },
         
         {NULL, NULL, NULL}
     };
+    #undef RESPONSE
